@@ -1,6 +1,7 @@
 'use client'
 
 import { useProducts } from '@/hooks/use-products'
+import { useQuery } from '@tanstack/react-query'
 import ProductCard from './product-card'
 import { AlertCircle, Package } from 'lucide-react'
 
@@ -33,6 +34,43 @@ export default function ProductGrid({
     limit,
     collection_id: collectionId,
     category_id: categoryId,
+  })
+
+  const productIds = rawProducts?.map((p: any) => p.id) || []
+  const { data: variantExtensions } = useQuery({
+    queryKey: ['variant-extensions', productIds],
+    queryFn: async () => {
+      const baseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'http://localhost:9000'
+      const storeId = process.env.NEXT_PUBLIC_STORE_ID
+      const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+      const headers: Record<string, string> = {}
+      if (storeId) headers['X-Store-Environment-ID'] = storeId
+      if (publishableKey) headers['x-publishable-api-key'] = publishableKey
+
+      const results: Record<string, { compare_at_price: number | null; manage_inventory: boolean; inventory_quantity: number | null }> = {}
+      await Promise.all(
+        productIds.map(async (id: string) => {
+          try {
+            const res = await fetch(
+              `${baseUrl}/store/product-extensions/products/${id}/variants`,
+              { headers },
+            )
+            if (!res.ok) return
+            const data = await res.json()
+            for (const v of data.variants || []) {
+              results[v.id] = {
+                compare_at_price: v.compare_at_price,
+                manage_inventory: v.manage_inventory ?? false,
+                inventory_quantity: v.inventory_quantity,
+              }
+            }
+          } catch {}
+        }),
+      )
+      return results
+    },
+    enabled: productIds.length > 0,
+    staleTime: 1000 * 60 * 5,
   })
 
   const products = rawProducts
@@ -95,7 +133,7 @@ export default function ProductGrid({
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-8 lg:grid-cols-3 xl:grid-cols-4">
       {products.map((product: any) => (
-        <ProductCard key={product.id} product={product} />
+        <ProductCard key={product.id} product={product} variantExtensions={variantExtensions} />
       ))}
     </div>
   )

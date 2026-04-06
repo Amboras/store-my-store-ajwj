@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { X, ShoppingBag, Minus, Plus, Trash2 } from 'lucide-react'
 import { getProductImage } from '@/lib/utils/placeholder-images'
+import { formatPrice } from '@/lib/utils/format-price'
 
 interface CartDrawerProps {
   isOpen: boolean
@@ -16,10 +17,8 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
   if (!isOpen) return null
 
-  const formattedSubtotal = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format((subtotal || 0) / 100)
+  const currencyCode = cart?.currency_code || cart?.region?.currency_code || 'usd'
+  const formattedSubtotal = formatPrice(subtotal || 0, currencyCode)
 
   return (
     <>
@@ -75,10 +74,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             <div className="space-y-6">
               {cart.items.map((item: any) => {
                 const price = item.unit_price
-                const formattedPrice = new Intl.NumberFormat('en-US', {
-                  style: 'currency',
-                  currency: 'USD',
-                }).format(price / 100)
+                const formattedPrice = formatPrice(price, currencyCode)
 
                 return (
                   <div key={item.id} className="flex gap-4">

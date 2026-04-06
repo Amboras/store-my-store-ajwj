@@ -32,7 +32,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        heading: ['var(--font-heading)', 'serif'],
+        heading: ['var(--font-heading)', 'sans-serif'],
         body: ['var(--font-body)', 'sans-serif'],
       },
       fontSize: {

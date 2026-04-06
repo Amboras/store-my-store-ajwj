@@ -4,43 +4,22 @@ import { useState, useMemo } from 'react'
 import { useCart } from '@/hooks/use-cart'
 import { Minus, Plus, Check, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import ProductPrice, { type VariantExtension } from './product-price'
 
 interface ProductActionsProps {
   product: any
-  compareAtPrices?: Record<string, number | null>
+  variantExtensions?: Record<string, VariantExtension>
 }
 
-// Helper: get the value of a specific option from a variant
-function getVariantOptionValue(variant: any, optionId: string): string | null {
-  const opt = variant.options?.find((o: any) => o.option_id === optionId || o.option?.id === optionId)
-  return opt?.value || null
-}
 
-// Helper: format price from the calculated_price object
-function formatVariantPrice(variant: any): string | null {
+// Helper: extract price amount from calculated_price object
+function getVariantPriceAmount(variant: any): number | null {
   const cp = variant?.calculated_price
   if (!cp) return null
-
-  // calculated_price can be an object with calculated_amount, or just a number
-  const amount = typeof cp === 'number' ? cp : cp.calculated_amount
-  const currency = typeof cp === 'object' ? cp.currency_code : 'usd'
-
-  if (amount == null) return null
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: (currency || 'usd').toUpperCase(),
-  }).format(amount / 100)
+  return typeof cp === 'number' ? cp : cp.calculated_amount ?? null
 }
 
-// Helper: format a raw cents amount with currency
-function formatAmount(cents: number, currency: string): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: (currency || 'usd').toUpperCase(),
-  }).format(cents / 100)
-}
-
-export default function ProductActions({ product, compareAtPrices }: ProductActionsProps) {
+export default function ProductActions({ product, variantExtensions }: ProductActionsProps) {
   const variants = product.variants || []
   const options = product.options || []
 
@@ -76,19 +55,15 @@ export default function ProductActions({ product, compareAtPrices }: ProductActi
     }) || variants[0]
   }, [variants, selectedOptions])
 
-  const formattedPrice = formatVariantPrice(selectedVariant)
-
-  // Compare-at price logic
-  const compareAtPriceCents = selectedVariant?.id ? compareAtPrices?.[selectedVariant.id] : null
-  const currentPriceCents = selectedVariant?.calculated_price?.calculated_amount
-    ?? (typeof selectedVariant?.calculated_price === 'number' ? selectedVariant.calculated_price : null)
+  // Extension data for selected variant (compare-at + inventory)
+  const ext = selectedVariant?.id ? variantExtensions?.[selectedVariant.id] : null
+  const currentPriceCents = getVariantPriceAmount(selectedVariant)
   const currency = selectedVariant?.calculated_price?.currency_code || 'usd'
-  const hasDiscount = compareAtPriceCents != null && currentPriceCents != null && compareAtPriceCents > currentPriceCents
-  const formattedCompareAt = hasDiscount ? formatAmount(compareAtPriceCents, currency) : null
 
-  const inventoryQuantity = selectedVariant?.inventory_quantity
-  const isOutOfStock = selectedVariant?.manage_inventory && inventoryQuantity != null && inventoryQuantity <= 0
-  const isLowStock = selectedVariant?.manage_inventory && inventoryQuantity != null && inventoryQuantity > 0 && inventoryQuantity < 10
+  const manageInventory = ext?.manage_inventory ?? false
+  const inventoryQuantity = ext?.inventory_quantity
+  const isOutOfStock = manageInventory && inventoryQuantity != null && inventoryQuantity <= 0
+  const isLowStock = manageInventory && inventoryQuantity != null && inventoryQuantity > 0 && inventoryQuantity < 10
 
   const handleOptionChange = (optionId: string, value: string) => {
     setSelectedOptions((prev) => ({ ...prev, [optionId]: value }))
@@ -119,16 +94,13 @@ export default function ProductActions({ product, compareAtPrices }: ProductActi
   return (
     <div className="space-y-6">
       {/* Price */}
-      <div className="flex items-baseline gap-3">
-        <p className={`text-xl font-heading font-semibold ${hasDiscount ? 'text-red-600' : ''}`}>
-          {formattedPrice || 'Price not available'}
-        </p>
-        {formattedCompareAt && (
-          <p className="text-base text-muted-foreground line-through">
-            {formattedCompareAt}
-          </p>
-        )}
-      </div>
+      <ProductPrice
+        amount={currentPriceCents}
+        currency={currency}
+        compareAtPrice={ext?.compare_at_price}
+        soldOut={isOutOfStock}
+        size="detail"
+      />
 
       {/* Option Selectors */}
       {hasMultipleVariants && options.map((option: any) => {
@@ -165,8 +137,9 @@ export default function ProductActions({ product, compareAtPrices }: ProductActi
                     (o: any) => (o.option_id === optionId || o.option?.id === optionId) && o.value === value
                   )
                   if (!hasValue) return false
-                  if (!v.manage_inventory) return true
-                  return v.inventory_quantity == null || v.inventory_quantity > 0
+                  const vExt = variantExtensions?.[v.id]
+                  if (!vExt?.manage_inventory) return true
+                  return vExt.inventory_quantity == null || vExt.inventory_quantity > 0
                 })
 
                 return (

@@ -17,12 +17,7 @@ const steps: { key: CheckoutStep; label: string }[] = [
   { key: 'payment', label: 'Payment & Review' },
 ]
 
-function formatPrice(amount: number, currency = 'usd') {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency.toUpperCase(),
-  }).format(amount / 100)
-}
+import { formatPrice } from '@/lib/utils/format-price'
 
 export default function CheckoutPage() {
   const router = useRouter()

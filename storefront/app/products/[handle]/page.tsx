@@ -6,6 +6,7 @@ import { Truck, RotateCcw, Shield, ChevronRight } from 'lucide-react'
 import ProductActions from '@/components/product/product-actions'
 import ProductAccordion from '@/components/product/product-accordion'
 import { getProductPlaceholder } from '@/lib/utils/placeholder-images'
+import { type VariantExtension } from '@/components/product/product-price'
 
 async function getProduct(handle: string) {
   try {
@@ -25,12 +26,14 @@ async function getProduct(handle: string) {
   }
 }
 
-async function getCompareAtPrices(productId: string): Promise<Record<string, number | null>> {
+async function getVariantExtensions(productId: string): Promise<Record<string, VariantExtension>> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || 'http://localhost:9000'
     const storeId = process.env.NEXT_PUBLIC_STORE_ID
+    const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
     const headers: Record<string, string> = {}
     if (storeId) headers['X-Store-Environment-ID'] = storeId
+    if (publishableKey) headers['x-publishable-api-key'] = publishableKey
 
     const res = await fetch(
       `${baseUrl}/store/product-extensions/products/${productId}/variants`,
@@ -39,9 +42,13 @@ async function getCompareAtPrices(productId: string): Promise<Record<string, num
     if (!res.ok) return {}
 
     const data = await res.json()
-    const map: Record<string, number | null> = {}
+    const map: Record<string, VariantExtension> = {}
     for (const v of data.variants || []) {
-      map[v.id] = v.compare_at_price
+      map[v.id] = {
+        compare_at_price: v.compare_at_price,
+        manage_inventory: v.manage_inventory ?? false,
+        inventory_quantity: v.inventory_quantity,
+      }
     }
     return map
   } catch {
@@ -61,7 +68,7 @@ export default async function ProductPage({
     notFound()
   }
 
-  const compareAtPrices = await getCompareAtPrices(product.id)
+  const variantExtensions = await getVariantExtensions(product.id)
 
   const allImages = [
     ...(product.thumbnail ? [{ url: product.thumbnail }] : []),
@@ -136,7 +143,7 @@ export default async function ProductPage({
             </div>
 
             {/* Variant Selector + Price + Add to Cart (client component) */}
-            <ProductActions product={product} compareAtPrices={compareAtPrices} />
+            <ProductActions product={product} variantExtensions={variantExtensions} />
 
             {/* Trust Signals */}
             <div className="grid grid-cols-3 gap-4 py-6 border-t">

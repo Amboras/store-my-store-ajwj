@@ -5,6 +5,7 @@ import { medusaClient } from '@/lib/medusa-client'
 import AccountLayout from '@/components/account/account-layout'
 import Link from 'next/link'
 import { Package, Loader2 } from 'lucide-react'
+import { formatPrice } from '@/lib/utils/format-price'
 
 export default function OrdersPage() {
   const { data, isLoading } = useQuery({
@@ -47,10 +48,7 @@ export default function OrdersPage() {
                 day: 'numeric',
               })
               const total = order.total
-                ? new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: order.currency_code?.toUpperCase() || 'USD',
-                  }).format(order.total / 100)
+                ? formatPrice(order.total, order.currency_code || 'usd')
                 : '—'
 
               return (
