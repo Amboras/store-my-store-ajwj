@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { CheckCircle, Package, ArrowRight } from 'lucide-react'
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { trackPurchase } from '@/lib/analytics'
-import { medusaClient } from '@/lib/medusa-client'
+import { getMedusaClient } from '@/lib/medusa-client'
 import { trackMetaEvent, toMetaCurrencyValue } from '@/lib/meta-pixel'
 import type { Order, OrderItem } from '@/types'
 
@@ -103,7 +103,7 @@ function OrderSuccessContent() {
 
     const loadOrder = async () => {
       try {
-        const { order } = await medusaClient.store.order.retrieve(orderId)
+        const { order } = await getMedusaClient().store.order.retrieve(orderId)
 
         if (!cancelled) {
           setPurchaseDetails(buildPurchaseTrackingDetails(order))
