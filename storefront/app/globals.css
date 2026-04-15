@@ -4,34 +4,31 @@
 
 @layer base {
   :root {
-    --background: 40 20% 98%;
-    --foreground: 0 0% 10%;
-    --muted: 40 10% 94%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 35 40% 50%;
+    /* GripForce — Clean athletic brand: charcoal + electric red accent */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 8%;
+    --muted: 220 10% 94%;
+    --muted-foreground: 0 0% 44%;
+    --accent: 4 85% 50%;
     --accent-foreground: 0 0% 100%;
-    --border: 40 10% 88%;
-    --ring: 35 40% 50%;
-    --primary: 0 0% 10%;
+    --border: 220 8% 88%;
+    --ring: 4 85% 50%;
+    --primary: 0 0% 8%;
     --primary-foreground: 0 0% 98%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-
-    /* Brand colors (dynamically injected from Store.metadata.brand) */
-    /* Access in CSS: var(--brand-primary), var(--brand-secondary) */
-    /* Managed by BrandStyleInjector component */
   }
 
   .dark {
     --background: 0 0% 6%;
-    --foreground: 40 20% 94%;
+    --foreground: 0 0% 95%;
     --muted: 0 0% 12%;
     --muted-foreground: 0 0% 55%;
-    --accent: 35 45% 55%;
+    --accent: 4 85% 55%;
     --accent-foreground: 0 0% 100%;
     --border: 0 0% 16%;
-    --ring: 35 45% 55%;
-    --primary: 40 20% 94%;
+    --ring: 4 85% 55%;
+    --primary: 0 0% 95%;
     --primary-foreground: 0 0% 6%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
@@ -72,7 +69,6 @@
     @apply w-full;
   }
 
-  /* Brand color utilities - uses colors from Store.metadata.brand */
   .btn-brand-primary {
     background-color: var(--brand-primary, hsl(var(--primary)));
     color: white;
@@ -99,6 +95,17 @@
 
   .bg-brand-secondary {
     background-color: var(--brand-secondary, hsl(var(--accent)));
+  }
+
+  /* Red accent utility */
+  .text-red-brand {
+    color: hsl(4, 85%, 50%);
+  }
+  .bg-red-brand {
+    background-color: hsl(4, 85%, 50%);
+  }
+  .border-red-brand {
+    border-color: hsl(4, 85%, 50%);
   }
 }
 
@@ -131,4 +138,14 @@ html {
 
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
+}
+
+/* Urgency pulse */
+@keyframes urgency-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-urgency {
+  animation: urgency-pulse 2s ease-in-out infinite;
 }

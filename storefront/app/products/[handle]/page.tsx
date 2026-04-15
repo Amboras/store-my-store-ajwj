@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-export const revalidate = 3600 // ISR: revalidate every hour
+export const revalidate = 3600
 import { medusaServerClient } from '@/lib/medusa-client'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Truck, RotateCcw, Shield, ChevronRight } from 'lucide-react'
+import { ChevronRight, Star, Users, Award } from 'lucide-react'
 import ProductActions from '@/components/product/product-actions'
 import ProductAccordion from '@/components/product/product-accordion'
 import { ProductViewTracker } from '@/components/product/product-view-tracker'
@@ -83,6 +83,12 @@ export async function generateMetadata({
   }
 }
 
+const socialStats = [
+  { icon: Users, value: '40,000+', label: 'Athletes trust GripForce' },
+  { icon: Star, value: '4.9/5', label: 'Average rating' },
+  { icon: Award, value: 'Med-Grade', label: 'Silicone quality' },
+]
+
 export default async function ProductPage({
   params,
 }: {
@@ -102,27 +108,28 @@ export default async function ProductPage({
     ...(product.images || []).filter((img: any) => img.url !== product.thumbnail),
   ]
 
-  // Use placeholder if no images
   const displayImages = allImages.length > 0
     ? allImages
     : [{ url: getProductPlaceholder(product.id) }]
 
+  const isCompleteSet = handle === 'gripforce-complete-training-set-all-5-levels'
+
   return (
     <>
       {/* Breadcrumbs */}
-      <div className="border-b">
+      <div className="border-b bg-[hsl(220,10%,97%)]">
         <div className="container-custom py-3">
           <nav className="flex items-center gap-2 text-xs text-muted-foreground">
             <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
             <ChevronRight className="h-3 w-3" />
             <Link href="/products" className="hover:text-foreground transition-colors">Shop</Link>
             <ChevronRight className="h-3 w-3" />
-            <span className="text-foreground">{product.title}</span>
+            <span className="text-foreground font-medium">{product.title}</span>
           </nav>
         </div>
       </div>
 
-      <div className="container-custom py-8 lg:py-12">
+      <div className="container-custom py-8 lg:py-14">
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
           {/* Product Images */}
           <div className="space-y-3">
@@ -135,6 +142,13 @@ export default async function ProductPage({
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover"
               />
+              {isCompleteSet && (
+                <div className="absolute top-4 left-4">
+                  <span className="bg-[hsl(4,85%,50%)] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5">
+                    Best Value — Save 38%
+                  </span>
+                </div>
+              )}
             </div>
 
             {displayImages.length > 1 && (
@@ -155,18 +169,37 @@ export default async function ProductPage({
                 ))}
               </div>
             )}
+
+            {/* Social proof stats below images */}
+            <div className="grid grid-cols-3 gap-3 pt-2">
+              {socialStats.map((stat) => (
+                <div key={stat.label} className="flex flex-col items-center text-center py-3 bg-[hsl(220,10%,97%)] rounded-sm">
+                  <stat.icon className="h-4 w-4 text-[hsl(4,85%,50%)] mb-1" strokeWidth={1.5} />
+                  <p className="font-bold text-sm">{stat.value}</p>
+                  <p className="text-[10px] text-muted-foreground">{stat.label}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Product Info */}
-          <div className="lg:sticky lg:top-24 lg:self-start space-y-6">
-            {/* Title & Subtitle */}
+          <div className="lg:sticky lg:top-24 lg:self-start space-y-5">
+            {/* Brand tag + Rating */}
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-[0.2em] text-[hsl(4,85%,50%)] font-bold">GripForce</p>
+              <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-0.5">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <span className="text-xs text-muted-foreground font-medium">(3,247 reviews)</span>
+              </div>
+            </div>
+
+            {/* Title */}
             <div>
-              {product.subtitle && (
-                <p className="text-sm uppercase tracking-[0.15em] text-muted-foreground mb-2">
-                  {product.subtitle}
-                </p>
-              )}
-              <h1 className="text-h2 font-heading font-semibold">{product.title}</h1>
+              <h1 className="text-h2 font-heading font-bold leading-tight">{product.title}</h1>
             </div>
 
             <ProductViewTracker
@@ -177,24 +210,8 @@ export default async function ProductPage({
               value={product.variants?.[0]?.calculated_price?.calculated_amount ?? null}
             />
 
-            {/* Variant Selector + Price + Add to Cart (client component) */}
+            {/* Actions (price, options, add to cart, bundle, trust) */}
             <ProductActions product={product} variantExtensions={variantExtensions} />
-
-            {/* Trust Signals */}
-            <div className="grid grid-cols-3 gap-4 py-6 border-t">
-              <div className="text-center">
-                <Truck className="h-5 w-5 mx-auto mb-1.5" strokeWidth={1.5} />
-                <p className="text-xs text-muted-foreground">Free Shipping</p>
-              </div>
-              <div className="text-center">
-                <RotateCcw className="h-5 w-5 mx-auto mb-1.5" strokeWidth={1.5} />
-                <p className="text-xs text-muted-foreground">30-Day Returns</p>
-              </div>
-              <div className="text-center">
-                <Shield className="h-5 w-5 mx-auto mb-1.5" strokeWidth={1.5} />
-                <p className="text-xs text-muted-foreground">Secure Checkout</p>
-              </div>
-            </div>
 
             {/* Accordion Sections */}
             <ProductAccordion
